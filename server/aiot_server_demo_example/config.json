@@ -11,7 +11,7 @@
         "transcript": {
             "enable": false
         }
-    }
+    },
     "tts": {
         "vendor": "YOUR_TTS_VENDOR",
         "params": {
