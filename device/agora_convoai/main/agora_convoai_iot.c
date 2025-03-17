@@ -14,7 +14,7 @@
 
 #define TAG "convoai"
 
-#define LOGI(format, ...) BK_LOGW(TAG, format "\n", ##__VA_ARGS__)
+#define LOGI(format, ...) BK_LOGI(TAG, format "\n", ##__VA_ARGS__)
 #define LOGE(format, ...) BK_LOGE(TAG, format "\n", ##__VA_ARGS__)
 #define LOGW(format, ...) BK_LOGW(TAG, format "\n", ##__VA_ARGS__)
 #define LOGD(format, ...) BK_LOGD(TAG, format "\n", ##__VA_ARGS__)
@@ -52,8 +52,10 @@ static int __https_post_request(const char *request_url, const char *post_body, 
   webclient_header_fields_add(session, "Content-Length: %d\r\n", post_body_len);
   webclient_header_fields_add(session, "Content-Type: application/json\r\n");
   err =  webclient_post(session, request_url, post_body, post_body_len);
-  LOGI("webclient post err=%d", err);
-
+  if (err < 0) {
+    LOGE("webclient post err=%d", err);
+    goto __fail_ext;
+  }
   do {
 		bytes_read = webclient_read(session, resp_buffer, resp_buffer_len);
 		if (bytes_read > 0) {
@@ -61,6 +63,7 @@ static int __https_post_request(const char *request_url, const char *post_body, 
 		}
 	} while (1);
 
+__fail_ext:
   webclient_close(session);
   return err == 200 ? 0 : err;
 }
