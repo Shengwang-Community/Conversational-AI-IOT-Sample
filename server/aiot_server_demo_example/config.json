@@ -1,0 +1,38 @@
+{
+    "app_id": "YOUR_AGORA_APP_ID",
+    "app_certificate": "YOUR_AGORA_APP_CERTIFICATE",
+    "customer_key": "YOUR_CUSTOMER_KEY",
+    "customer_secret": "YOUR_CUSTOMER_SECRET",
+    "asr": {
+        "language": "zh-CN"
+    },
+    "parameters": {
+        "output_audio_codec": "G722",   
+        "transcript": {
+            "enable": false
+        }
+    }
+    "tts": {
+        "vendor": "YOUR_TTS_VENDOR",
+        "params": {
+            
+        }
+    },
+    "idle_timeout": 30,
+    "llm": {
+        "url": "YOUR_LLM_API_URL",
+        "params": {
+            "model": "YOUR_LLM_MODEL"
+        },
+        "api_key": "YOUR_LLM_API_KEY",
+        "system_messages": [
+            {
+                "role": "system",
+                "content": "You are a helpful chatbot."
+            }
+        ],
+        "max_history": 10,
+        "greeting_message": "你好，我是小爱，有什么可以帮助你的吗？",
+        "failure_message": "抱歉，我暂时无法回答您的问题，您可以尝试换个问题或者联系人工客服。"
+    }
+}

@@ -1,0 +1,53 @@
+#pragma once
+
+#include "agora_rtc_api.h"
+
+#define CONFIG_AGENT_SERVER_URL         "http://10.91.0.63:5001"
+
+#define AGORA_CONVOAI_LOCAL_UID         1
+#define AGORA_CONVOAI_AGENT_UID         11
+
+//#define CONFIG_AUDIO_ONLY
+#define CONFIG_USE_G722_CODEC
+//#define CONFIG_USE_G711U_CODEC
+//#define CONFIG_USE_G711A_CODEC
+
+//#define CONFIG_UVC_CAMERA  /* config CONFIG_USB_UVC in cp1 */
+#define CONFIG_DVP_CAMERA
+
+#define SPK_GAIN_MAX        (0X1E)
+#define SPK_VOLUME_LEVEL (11) //[0,10]
+
+#define BANDWIDTH_ESTIMATE_MIN_BITRATE   (500000)
+#define BANDWIDTH_ESTIMATE_MAX_BITRATE   (2000000)
+#define BANDWIDTH_ESTIMATE_START_BITRATE (800000)
+
+#if defined(CONFIG_USE_G711U_CODEC)   //G711U
+#define CONFIG_AUDIO_CODEC_TYPE         AUDIO_CODEC_DISABLED
+#define CONFIG_PCM_FRAME_LEN            320
+#define CONFIG_PCM_SAMPLE_RATE          8000
+#define CONFIG_PCM_CHANNEL_NUM          1
+#define CONFIG_SEND_PCM_DATA
+#elif defined(CONFIG_USE_G711A_CODEC) // G711A
+#define CONFIG_AUDIO_CODEC_TYPE         AUDIO_CODEC_DISABLED
+#define CONFIG_PCM_FRAME_LEN            320
+#define CONFIG_PCM_SAMPLE_RATE          8000
+#define CONFIG_PCM_CHANNEL_NUM          1
+#define CONFIG_SEND_PCM_DATA
+#elif defined(CONFIG_USE_G722_CODEC)  // G722
+#define CONFIG_AUDIO_CODEC_TYPE         AUDIO_CODEC_DISABLED
+#define CONFIG_PCM_FRAME_LEN            640
+#define CONFIG_PCM_SAMPLE_RATE          16000
+#define CONFIG_PCM_CHANNEL_NUM          1
+#define CONFIG_SEND_PCM_DATA
+#else                                // DISABLE
+#define CONFIG_AUDIO_CODEC_TYPE         AUDIO_CODEC_DISABLED
+#define CONFIG_PCM_FRAME_LEN            160
+#define CONFIG_PCM_SAMPLE_RATE          8000
+#define CONFIG_PCM_CHANNEL_NUM          1
+// #define CONFIG_SEND_PCM_DATA
+#endif
+#define CONFIG_AUDIO_FRAME_DURATION_MS     20  // except OPUS
+// (CONFIG_PCM_FRAME_LEN * 1000 / CONFIG_PCM_SAMPLE_RATE / CONFIG_PCM_CHANNEL_NUM /sizeof(int16_t))
+
+#define DEFAULT_SDK_LOG_PATH "io.agora.rtc_sdk"
