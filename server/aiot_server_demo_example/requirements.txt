@@ -1,0 +1,17 @@
+# Project dependencies
+requests>=2.25.1
+
+# Python standard library dependencies (no need to install)
+# base64
+# hashlib
+# uuid
+# json
+# logging
+# random
+# os
+# time
+# hmac
+# zlib
+# collections
+# struct
+# http.server 
