@@ -146,6 +146,12 @@ class BleManager(
         return bleConnector.sendUrl(url)
     }
 
+    override fun queryWifiList(): String {
+        BleLogger.d(TAG, "queryWifiList")
+        checkBluetoothPermission()
+        return bleConnector.queryWifiList()
+    }
+
     override fun startStation(): Boolean {
         checkBluetoothPermission()
         return bleConnector.startStation()
@@ -156,13 +162,12 @@ class BleManager(
         return bleConnector.getDeviceId()
     }
 
-    override fun distributionNetwork(
-        device: BluetoothDevice,
-        ssid: String,
-        pwd: String,
-        token: String,
-        url: String
-    ): Boolean {
+    override fun startBleAPN(): String {
+        checkBluetoothPermission()
+        return bleConnector.startBleAPN()
+    }
+
+    override fun distributionNetwork(ssid: String, pwd: String, token: String, url: String): Boolean {
         // Check if network distribution is already in progress
         if (isDistributing.get()) {
             BleLogger.w(TAG, "Network distribution already in progress, please wait for current process to complete")
@@ -190,20 +195,16 @@ class BleManager(
                 }
             }
 
-            if (url.isNotEmpty()) {
-                val sendUrlResult = sendUrl(url)
-                if (!sendUrlResult) {
-                    BleLogger.e(TAG, "distributionNetwork sendUrl failed")
-                    return false
-                }
+            val sendUrlResult = sendUrl(url)
+            if (!sendUrlResult) {
+                BleLogger.e(TAG, "distributionNetwork sendUrl failed")
+                return false
             }
 
-            if (token.isNotEmpty()) {
-                val sendTokenResult = sendToken(token)
-                if (!sendTokenResult) {
-                    BleLogger.e(TAG, "distributionNetwork sendToken failed")
-                    return false
-                }
+            val sendTokenResult = sendToken(token)
+            if (!sendTokenResult) {
+                BleLogger.e(TAG, "distributionNetwork sendToken failed")
+                return false
             }
 
             startStationResult = startStation()

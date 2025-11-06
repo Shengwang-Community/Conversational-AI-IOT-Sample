@@ -108,6 +108,16 @@ interface IBleManager {
     fun sendUrl(url: String): Boolean
 
     /**
+     * Query WiFi list from the connected BLE device.
+     *
+     * @return WiFi list string
+     * @throws SecurityException if BLUETOOTH_CONNECT permission is not granted
+     */
+    @WorkerThread
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun queryWifiList(): String
+
+    /**
      * Initiates station mode on the connected BLE device.
      *
      * @return true if station mode was started successfully, false otherwise
@@ -126,10 +136,19 @@ interface IBleManager {
     fun getDeviceId(): String
 
     /**
+     * Start BLE APN on the connected BLE device.
+     *
+     * @return true if BLE APN was started successfully, false otherwise
+     * @throws SecurityException if BLUETOOTH_CONNECT permission is not granted
+     */
+    @WorkerThread
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun startBleAPN(): String
+
+    /**
      * Performs network distribution setup on the connected BLE device.
      * This includes sending WiFi credentials and authentication token.
      *
-     * @param device The BluetoothDevice to perform network distribution on
      * @param ssid The WiFi network SSID
      * @param pwd The WiFi network password
      * @param token The authentication token
@@ -138,13 +157,7 @@ interface IBleManager {
      */
     @WorkerThread
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun distributionNetwork(
-        device: BluetoothDevice,
-        ssid: String,
-        pwd: String,
-        token: String = "",
-        url: String = ""
-    ): Boolean
+    fun distributionNetwork(ssid: String, pwd: String, token: String, url: String): Boolean
 
     /**
      * Registers a BLE event listener to receive scan and connection callbacks.

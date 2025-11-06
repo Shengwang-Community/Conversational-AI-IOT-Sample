@@ -70,7 +70,7 @@ Create a `config.json` file with the following structure and explanations:
   },
   
   // 会话超时配置
-  "idle_timeout": 30,  // 会话超时时间（秒），设备端异常退出后服务端将在等待指定时间后自动退出，影响计费
+  "idle_timeout": 30,  // 会话超时时间（秒）
   
   // 大语言模型(LLM)配置
   "llm": {
@@ -85,7 +85,7 @@ Create a `config.json` file with the following structure and explanations:
         "content": "You are a helpful chatbot."
       }
     ],
-    "max_history": 10,  // 最大对话历史记录数，影响对话轮次关联度和大模型计费
+    "max_history": 10,  // 最大历史记录数
     "greeting_message": "你好，我是小爱，有什么可以帮助你的吗？",  // 欢迎语
     "failure_message": "抱歉，我暂时无法回答您的问题..."  // 失败提示
   }
@@ -104,12 +104,12 @@ The server will run on port 5001 by default.
 ## API Documentation
 
 ### Base URL
-`https://your-domain.com/`
+`https://your-domain.com/api/v1`
 
 ### Authentication
-All requests have not any accessuthentication :
+All requests require an Authorization header:
 ```http
-Authorization: None
+Authorization: Bearer <access_token>
 ```
 
 ### API Endpoints

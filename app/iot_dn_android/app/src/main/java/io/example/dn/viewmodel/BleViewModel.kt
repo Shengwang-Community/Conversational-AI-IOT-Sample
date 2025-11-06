@@ -51,6 +51,10 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
     private val _wifiInfo = MutableStateFlow<String>("Unknown")
     val wifiInfo = _wifiInfo.asStateFlow()
 
+    // 用于存储WiFi列表的数据
+    private val _wifiList = MutableStateFlow<List<String>>(emptyList())
+    val wifiList = _wifiList.asStateFlow()
+
     private val viewModelScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
@@ -95,7 +99,7 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
                     return
                 }
                 Log.d(TAG, "onDeviceFound: ${device.name}, ${device.address}")
-                if (device.name.startsWith("X1-") || device.name.startsWith("bk-")) {
+                if (device.name.startsWith("X1-") || device.name.startsWith("R1-")) {
                     _devices.value += device
                 }
             }
@@ -107,8 +111,7 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             override fun onDataReceived(uuid: String, data: ByteArray) {
-                Log.d(TAG, "onDataReceived: $uuid, ${data.toString(Charsets.UTF_8)}")
-
+                Log.d(TAG, "onDataReceived: $uuid, ${formatByteArray(data)}")
             }
 
             override fun onMessageSent(
@@ -164,16 +167,14 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
      * Configure device with WiFi settings
      * @param device The BLE device to configure
      * @param ssid WiFi SSID
+     * @param password WiFi password
+     * @param token Authentication token
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun configureDevice(
-        device: BleDevice,
-        ssid: String,
-        password: String,
-    ) {
+    fun configureDevice(ssid: String, password: String, token: String, url: String) {
         viewModelScope.launch {
             try {
-                val ret = bleManager.distributionNetwork(device.device, ssid, password)
+                val ret = bleManager.distributionNetwork(ssid, password, token, url)
                 _message.value = if (ret) "Configuration successful" else "Configuration failed"
             } catch (e: BleError) {
                 _message.value = e.message ?: "Unknown error"
@@ -212,11 +213,69 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Get WiFi list
+     */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun getWifiList() {
+        viewModelScope.launch {
+            try {
+                val ret = bleManager.queryWifiList()
+                // 将JSON字符串转换为Array<String>
+                val wifiArray = parseWifiListFromJson(ret)
+                _wifiList.value = wifiArray.toList()
+            } catch (e: BleError) {
+                _wifiList.value = emptyList()
+            }
+        }
+    }
+
+    /**
+     * Parse WiFi list from JSON string to Array<String>
+     * @param jsonString JSON string like ["HUAWEI-G108S1","NXIOT",...]
+     * @return Array of WiFi SSIDs
+     */
+    private fun parseWifiListFromJson(jsonString: String): Array<String> {
+        return try {
+            // 移除首尾的方括号，然后按逗号分割
+            val trimmed = jsonString.trim()
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                val content = trimmed.substring(1, trimmed.length - 1)
+                if (content.isBlank()) {
+                    emptyArray()
+                } else {
+                    // 分割并移除每个元素周围的引号
+                    content.split(",")
+                        .map { it.trim().removeSurrounding("\"") }
+                        .filter { it.isNotBlank() }
+                        .toTypedArray()
+                }
+            } else {
+                // 如果不是JSON格式，尝试按逗号分割
+                jsonString.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .toTypedArray()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse WiFi list JSON: $jsonString", e)
+            emptyArray()
+        }
+    }
+
+    /**
      * Set WiFi password
      * @param password The WiFi password to set
      */
     fun setWifiPassword(password: String) {
         _wifiPassword.value = password
+    }
+
+    /**
+     * Set WiFi info (SSID)
+     * @param ssid The WiFi SSID to set
+     */
+    fun setWifiInfo(ssid: String) {
+        _wifiInfo.value = ssid
     }
 
     /**
@@ -249,7 +308,54 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun bleApn() {
+        viewModelScope.launch {
+            val ret = bleManager.startBleAPN()
+            _message.value = "BLE APN: $ret"
+        }
+    }
+
     companion object {
         private const val TAG = "BleViewModel"
+
+        /**
+         * Format byte array for logging with mixed format: decimal before '[', string after '['
+         */
+        private fun formatByteArray(data: ByteArray): String {
+            if (data.isEmpty()) {
+                return "[]"
+            }
+
+            val utf8String = try {
+                String(data, Charsets.UTF_8)
+            } catch (e: Exception) {
+                return "Invalid UTF-8: ${data.joinToString(" ") { it.toString() }}"
+            }
+
+            // Find the position of '[' character
+            val bracketIndex = utf8String.indexOf('[')
+
+            return if (bracketIndex > 0) {
+                // Split the data: binary part (decimal) + string part
+                val binaryPart = data.take(bracketIndex).toByteArray()
+                val stringPart = data.drop(bracketIndex).toByteArray()
+
+                val binaryDecimal = binaryPart.joinToString(" ") { it.toString() }
+                val stringContent = try {
+                    String(stringPart, Charsets.UTF_8)
+                } catch (e: Exception) {
+                    "Invalid string part"
+                }
+
+                "Binary: [$binaryDecimal] + String: \"$stringContent\""
+            } else if (bracketIndex == 0) {
+                // Data starts with '[', all string
+                "String: \"$utf8String\""
+            } else {
+                // No '[' found, treat as binary data
+                "Binary: [${data.joinToString(" ") { it.toString() }}]"
+            }
+        }
     }
 }

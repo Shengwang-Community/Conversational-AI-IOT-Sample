@@ -1,78 +1,207 @@
-# 蓝牙低功耗（BLE）设备配网应用使用指南
+# 蓝牙低功耗（BLE）设备配网库
 
-## 应用概述
+## 项目概述
 
-这是一个用于Android设备的蓝牙低功耗（BLE）设备配网应用，可以帮助您通过BLE连接智能设备并配置其WiFi网络连接。本应用基于我们的BLE配网库开发，提供了简单直观的用户界面。
+这是一个用于Android设备的蓝牙低功耗（BLE）设备配网库，主要用于通过BLE连接智能设备并配置其WiFi网络连接。该项目包含两个主要模块：
 
-## 使用流程
+1. **lib模块**：核心BLE功能库，提供BLE设备扫描、连接、Wifi管理和数据交互的功能
+2. **app模块**：示例应用，展示如何使用lib库进行BLE设备配网
 
-### 1. 权限申请
+## 功能特点
 
-首次使用应用时，需要获取必要的权限：
+### 核心库功能
 
-- 点击**申请权限**按钮，应用将请求蓝牙和位置权限
-- 在系统弹出的权限请求对话框中选择"允许"
-- 这些权限对于BLE设备扫描和连接是必需的
+- BLE设备扫描与发现
+- BLE设备连接管理
+- BLE数据传输
+- 当前连接WiFi信息
 
-### 2. 检查WiFi权限
+### 示例应用功能
 
-- 点击**检查WiFi权限**按钮，应用将检查是否已获取WiFi相关权限
-- 如果权限已获取，将显示"已获取WiFi权限"的提示
-- 如果权限未获取，将显示"未获取WiFi权限"的提示
+- 权限请求界面
+- WiFi信息获取
+- BLE设备扫描
+- 设备列表显示
+- 设备连接与配网
 
-### 3. 获取当前WiFi信息
+## 技术架构
 
-- 点击**获取当前WiFi信息**按钮，应用将获取并显示当前连接的WiFi网络名称(SSID)
-- 获取的WiFi信息将显示在按钮下方的卡片中
+### 核心库架构
 
-### 4. 输入WiFi密码
+- **回调接口**：`BleConnectionCallback`, `BleScanCallback`, `BleListener`
+- **连接器**：`BleConnector`, `IBleConnector`
+- **扫描器**：`BleScanner`, `IBleScanner`
+- **管理器**：`BleManager`, `IBleManager`, `WifiManager`, `IWifiManager`
+- **数据模型**：`BleDevice`, `WifiInfo`
+- **状态管理**：`BleConnectionState`, `BleScanState`
+- **工具类**：`BleUtils`, `BleLogger`
 
-- 在**WiFi密码**输入框中输入当前WiFi网络的密码
-- 此密码将用于配置智能设备连接到您的WiFi网络
+### 示例应用架构
 
-### 5. 扫描BLE设备
+- **MVVM架构**：使用ViewModel和StateFlow
+- **Jetpack Compose UI**：现代化的声明式UI
+- **权限管理**：`BlePermissionManager`
+- **ANR监控**：`AnrMonitor`
 
-- 点击**开始扫描**按钮，应用将开始扫描周围的BLE设备
-- 扫描过程中，按钮文字将变为"停止扫描"
-- 扫描到的设备将显示在下方的列表中
-- 再次点击按钮可停止扫描
+## 使用方法
 
-### 6. 连接设备
+### 添加依赖
 
-在设备列表中，每个设备卡片包含以下信息和操作：
+```gradle
+implementation project(":lib")
+```
 
-- 设备名称
-- MAC地址
-- 信号强度(RSSI)
-- **建立连接**按钮：点击此按钮与选中的设备建立BLE连接
-- **配置网络**按钮：点击此按钮将之前输入的WiFi信息发送给设备，帮助设备连接到WiFi网络
-- **断开连接**按钮：点击此按钮断开与设备的BLE连接
+### 初始化BLE日志
 
-## 配网流程
+```kotlin
+BleLogger.init(object : BleLogCallback {
+    override fun onLog(level: BleLogLevel, tag: String, message: String) {
+        when (level) {
+            BleLogLevel.DEBUG -> Log.d(tag, message)
+            BleLogLevel.INFO -> Log.i(tag, message)
+            BleLogLevel.WARN -> Log.w(tag, message)
+            BleLogLevel.ERROR -> Log.e(tag, message)
+        }
+    }
+})
+```
 
-完整的设备配网流程如下：
+### 创建BLE管理器
 
-1. 申请并获取必要权限
-2. 获取当前WiFi信息
-3. 输入WiFi密码
-4. 扫描并找到目标BLE设备
-5. 点击"建立连接"按钮连接设备
-6. 连接成功后，点击"配置网络"按钮将WiFi信息发送给设备
-8. 配网完成后，点击"断开连接"按钮断开与设备的连接
+```kotlin
+val bleManager = BleManager(context)
+```
+
+### 添加监听器
+
+```kotlin
+bleManager.addListener(object : BleListener {
+    override fun onScanStateChanged(state: BleScanState) {
+        // 处理扫描状态变化
+    }
+    
+    override fun onDeviceFound(device: BleDevice) {
+        // 处理发现的设备
+    }
+    
+    override fun onConnectionStateChanged(state: BleConnectionState) {
+        // 处理连接状态变化
+    }
+    
+    override fun onDataReceived(uuid: String, data: ByteArray) {
+        // 处理接收到的数据
+    }
+})
+```
+
+### 扫描设备
+
+```kotlin
+bleManager.startScan(null)  // 无过滤器扫描所有设备
+```
+
+### 蓝牙设备连接与配网流程
+
+1. **连接蓝牙设备**
+```kotlin
+bleManager.connect(device.device)
+```
+
+2. **获取设备ID**
+```kotlin
+val deviceId = bleManager.getDeviceId()
+```
+
+3. **获取Token**
+由业务层完成
+
+4. **扫描WIFI列表**
+```kotlin
+val wifiList = bleManager.queryWifiList()
+// 返回JSON格式的WiFi列表字符串，如：["HUAWEI-G108S1","NXIOT","RTM_2.4G",...]
+```
+
+5. **配置WiFi网络**
+```kotlin
+bleManager.distributionNetwork(device.device, ssid, password, token, url)
+```
+
+6. **断开连接**
+```kotlin
+bleManager.disconnect()
+```
+
+请确保按照上述在子线程中顺序执行操作，先连接设备，然后获取设备ID，扫描WiFi列表，最后进行WiFi配网和断开连接。
+
+### 蓝牙APN流程
+
+蓝牙APN（Access Point Name）模式允许设备通过蓝牙连接提供网络访问服务。此模式通常用于设备配置或网络诊断。
+
+1. **连接蓝牙设备**
+```kotlin
+bleManager.connect(device.device)
+```
+
+2. **获取设备ID**
+```kotlin
+val deviceId = bleManager.getDeviceId()
+```
+
+3. **获取Token**
+由业务层完成
+
+4. **设置设备ID、Token和URL**
+```kotlin
+// 发送设备ID
+bleManager.sendSSID(deviceId)
+
+// 发送Token（分两部分发送）
+bleManager.sendToken(token)
+
+// 发送URL
+bleManager.sendUrl(url)
+```
+
+5. **启动蓝牙APN模式**
+```kotlin
+val bluetoothName = bleManager.startBleAPN()
+if (bluetoothName.isNotEmpty()) {
+    // APN模式启动成功
+} else {
+    // APN模式启动失败
+}
+```
+
+6. **断开连接**
+```kotlin
+bleManager.disconnect()
+```
+
+请确保按照上述在子线程中顺序执行操作，先连接设备，然后获取设备ID，设置设备ID、Token和URL，最后启动APN模式和断开连接。
+
+
+
+## 权限要求
+
+应用需要以下权限：
+
+```xml
+<!-- WiFi权限 -->
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+<!-- 蓝牙权限 -->
+<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+```
+
 
 ## 注意事项
 
-1. 确保您的Android设备已开启蓝牙和位置服务
-2. 确保目标智能设备处于可发现模式
-3. 配网过程中请保持手机与智能设备的距离不超过5米
-4. 如果配网失败，请尝试重新连接设备或重启应用
-5. 对于Android 12及以上设备，需要特别注意授予`BLUETOOTH_SCAN`和`BLUETOOTH_CONNECT`权限
-6. 请提前在手机设置界面中连接2.4G类型wifi，并保证该wifi可以正常访问互联网，否则将配网失败
-
-## 故障排除
-
-- 如果应用无法扫描到设备，请检查蓝牙和位置服务是否已开启
-- 如果连接设备失败，请尝试重新扫描或重启智能设备
-- 如果配网失败，请确认WiFi密码是否正确输入
-
-希望本指南能帮助您顺利使用我们的BLE设备配网应用。如有任何问题，请联系我们的技术支持团队。
+1. 需要在Android 6.0及以上设备上动态请求权限
+2. 对于Android 12及以上设备，需要特别注意`BLUETOOTH_SCAN`和`BLUETOOTH_CONNECT`权限
+3. 位置权限对于BLE扫描是必需的
+4. 确保目标设备支持BLE功能

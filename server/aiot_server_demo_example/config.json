@@ -7,15 +7,25 @@
         "language": "zh-CN"
     },
     "parameters": {
-        "output_audio_codec": "G722",   
+        "output_audio_codec": "G722",
+        "enable_dump": true,
+        "agent_rtc_sdk_params": "{\"che.audio.acm_ptime\": 20}",
         "transcript": {
-            "enable": false
+            "enable": false,
+            "redundant": false,
+            "enable_words": false
+        },
+        "audio3a_downstream": {
+            "interleaved_reverse_stream": false,
+            "passthrough": false,
+            "enable_aec": false,
+            "enable_agc": false,
+            "enable_ans": false
         }
     },
     "tts": {
         "vendor": "YOUR_TTS_VENDOR",
         "params": {
-            
         }
     },
     "idle_timeout": 30,

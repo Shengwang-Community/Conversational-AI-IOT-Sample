@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
 import io.iot.dn.ble.callback.BleConnectionCallback
-import io.iot.dn.ble.callback.BleListener
 
 /**
  * Interface for BLE device connection and communication.
@@ -76,6 +75,14 @@ interface IBleConnector {
     fun sendUrl(url: String): Boolean
 
     /**
+     * Query WiFi list from connected device
+     * @return WiFi list string
+     */
+    @WorkerThread
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun queryWifiList(): String
+
+    /**
      * Start the station mode on connected device
      * @return true if station was started successfully, false otherwise
      */
@@ -90,6 +97,14 @@ interface IBleConnector {
     @WorkerThread
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun getDeviceId(): String
+
+    /**
+     * Start BLE APN on the connected BLE device.
+     * @return true if BLE APN was started successfully, false otherwise
+     */
+    @WorkerThread
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun startBleAPN(): String
 
     /**
      * Set callback for connection state and data events

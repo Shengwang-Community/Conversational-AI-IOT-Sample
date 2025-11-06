@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,13 +28,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -125,11 +131,14 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
     val message by viewModel.message.collectAsStateWithLifecycle()
     val wifiInfo by viewModel.wifiInfo.collectAsStateWithLifecycle()
     val wifiPassword by viewModel.wifiPassword.collectAsStateWithLifecycle()
+    val wifiList by viewModel.wifiList.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
         // 权限申请按钮
@@ -162,6 +171,52 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // 获取WiFi列表按钮
+        Button(
+            onClick = {
+                viewModel.getWifiList()
+            }, modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("获取WiFi列表")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // WiFi列表显示
+        if (wifiList.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "WiFi列表 (${wifiList.size}个网络)",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 200.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(wifiList) { ssid ->
+                            WifiItem(
+                                ssid = ssid,
+                                isSelected = wifiInfo == ssid,
+                                onClick = {
+                                    viewModel.setWifiInfo(ssid)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         // 获取当前WiFi信息按钮
         Button(
             onClick = {
@@ -172,7 +227,7 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
         }
 
         // 显示WiFi信息
-        if (wifiInfo != "未知") {
+        if (wifiInfo != "Unknown") {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -212,14 +267,17 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
                         ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED
                     }
                 } else {
-                    ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
+                    ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.BLUETOOTH
+                    ) != PackageManager.PERMISSION_GRANTED
                 }
-                
+
                 if (missingPermissions) {
                     (context as? MainActivity)?.getPermissionManager()?.checkAndRequestPermissions()
                     return@Button
                 }
-                
+
                 if (isScanning) viewModel.stopScan()
                 else viewModel.startScan()
             },
@@ -238,25 +296,32 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
         }
 
         // 设备列表
-        LazyColumn(
-            modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(devices.toList()) { device ->
+        if (devices.isNotEmpty()) {
+            Text(
+                text = "发现的设备 (${devices.size}个)",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            devices.forEach { device ->
                 DeviceCard(
                     device = device,
                     onConnect = { viewModel.connect(device) },
+                    onGetDeviceId = { viewModel.getDeviceId() },
                     onDisconnect = { viewModel.disconnect() },
                     ssid = wifiInfo,
                     password = wifiPassword,
                     onActivate = { config ->
                         // 这里可以添加配网逻辑
                         viewModel.configureDevice(
-                            device,
                             config.wifiConfig.ssid,
-                            config.wifiConfig.pwd ?: ""
+                            config.wifiConfig.pwd ?: "",
+                            "xxxx.xxxxx.xxxx",
+                            "http://10.91.0.63:5001",
                         )
-                    }
+                    },
+                    onBleApn = { viewModel.bleApn() }
                 )
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -267,10 +332,12 @@ fun BleScreen(viewModel: BleViewModel = viewModel()) {
 fun DeviceCard(
     device: BleDevice,
     onConnect: (() -> Unit)? = null,
+    onGetDeviceId: (() -> Unit)? = null,
     onDisconnect: (() -> Unit)? = null,
     ssid: String? = null,
     password: String? = null,
-    onActivate: ((DeviceConnectConfig) -> Unit)? = null
+    onActivate: ((DeviceConnectConfig) -> Unit)? = null,
+    onBleApn: (() -> Unit)? = null
 ) {
     Card(modifier = Modifier.fillMaxWidth(), onClick = { }) {
         Column(
@@ -303,6 +370,18 @@ fun DeviceCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // 获取设备ID按钮
+            Button(
+                onClick = {
+                    onGetDeviceId?.invoke()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("获取设备ID")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // 配置网络按钮
             Button(
                 onClick = {
@@ -316,6 +395,19 @@ fun DeviceCard(
                 Text("配置网络")
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    onBleApn?.invoke()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("蓝牙APN")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // 断开连接按钮
             Button(
                 onClick = {
@@ -324,6 +416,41 @@ fun DeviceCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("断开连接")
+            }
+        }
+    }
+}
+
+@Composable
+fun WifiItem(
+    ssid: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = ssid,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            if (isSelected) {
+                Text(
+                    text = "✓",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

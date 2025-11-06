@@ -1,0 +1,13 @@
+menu "net_transfer"
+	config BK_WSS_TRANS
+		bool "Enable Beken Websocket Transmit for AI"
+		default n
+
+	config VOLC_HTTP_STARTUP_AGENT
+		bool "Enable Beken Websocket Transmit for AI"
+		depends on BK_DEV_STARTUP_AGENT
+		default y
+	config BK_WSS_TRANS_NOPSRAM
+		bool "Enable Websocket Transmit for AI without PSRAM"
+		default n
+endmenu

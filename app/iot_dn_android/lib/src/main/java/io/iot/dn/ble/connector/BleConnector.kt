@@ -307,6 +307,19 @@ class BleConnector(
     }
 
     /**
+     * Query WiFi list from connected device
+     * @return WiFi list string
+     */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    override fun queryWifiList(): String {
+        BleLogger.d(TAG, "queryWifiList")
+        val ret = operationCharacteristicWrite(OP_START_WIFI_SCAN, null, true)
+        val retStr = ret.second?.third?.let { String(it) } ?: ""
+        BleLogger.d(TAG, "queryWifiList ret => $retStr")
+        return retStr
+    }
+
+    /**
      * Writes operation data to the operation characteristic.
      *
      * @param opCode Operation code to write
@@ -383,6 +396,18 @@ class BleConnector(
         BleLogger.d(TAG, "getDeviceId")
         val ret = operationCharacteristicWrite(OP_GET_DEVICE_ID, null, true)
         BleLogger.d(TAG, "getDeviceId ret => ${ret.second?.third?.let { String(it) }}")
+        return ret.second?.third?.let { String(it) } ?: ""
+    }
+
+    /**
+     * Start BLE APN on the connected BLE device.
+     * @return true if BLE APN was started successfully, false otherwise
+     */
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    override fun startBleAPN(): String {
+        BleLogger.d(TAG, "startBleAPN")
+        val ret = operationCharacteristicWrite(OP_BLE_APN, null, true)
+        BleLogger.d(TAG, "startBleAPN ret => ${ret.first}")
         return ret.second?.third?.let { String(it) } ?: ""
     }
 
@@ -552,9 +577,9 @@ class BleConnector(
             // Notify all listeners of received data
             notifyDataReceived(uuid, data)
 
-            val opcode = data[0].toInt() or (data[1].toInt() shl 8)
+            val opcode = java.lang.Byte.toUnsignedInt(data[0]) or (java.lang.Byte.toUnsignedInt(data[1]) shl 8)
             val statusCode = java.lang.Byte.toUnsignedInt(data[2])
-            val length = data[3].toInt() or (data[4].toInt() shl 8)
+            val length = java.lang.Byte.toUnsignedInt(data[3]) or (java.lang.Byte.toUnsignedInt(data[4]) shl 8)
 
             if (length != data.size - 5) {
                 BleLogger.e(TAG, "payload error")
@@ -732,6 +757,8 @@ class BleConnector(
         private val URL_UUID = UUID.fromString("0000ea09-0000-1000-8000-00805f9b34fb")
         private val DESCRIPTOR_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
         private const val OP_STATION_START = 1
+        private const val OP_BLE_APN = 14
+        private const val OP_START_WIFI_SCAN = 24
         private const val OP_GET_DEVICE_ID = 60000
         private const val DEFAULT_PRE_STATE = -1000
         private const val MAX_TOKEN_LENGTH = 500

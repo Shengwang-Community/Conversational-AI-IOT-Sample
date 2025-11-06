@@ -65,23 +65,18 @@ class RequestHandler(BaseHTTPRequestHandler):
                 
             config = load_config()
             
-            token = RtcTokenBuilder.build_token_with_uid(
-                    config['app_id'],
-                    config['app_certificate'],
-                    channel_name,
-                    uid,
-                    Role_Publisher,
-                    24 * 3600,  # token_expire
-                    24 * 3600   # privilege_expire
-                )
-            
-            if not token:
-                logger.error('Failed to generate token')
-                self.send_error_response(500, {
-                    'error': 'Failed to generate token',
-                    'reason': 'Please check if app_id and app_certificate in config.json are correct'
-                })
-                return
+            if 'app_certificate' in config:
+                token = RtcTokenBuilder.build_token_with_uid(
+                        config['app_id'],
+                        config['app_certificate'],
+                        channel_name,
+                        uid,
+                        Role_Publisher,
+                        24 * 3600,  # token_expire
+                        24 * 3600   # privilege_expire
+                    )
+            else:
+                token = ""
                 
             response = {
                 'app_id': config['app_id'],
@@ -128,16 +123,19 @@ class RequestHandler(BaseHTTPRequestHandler):
                 logger.warning('Missing channel_name parameter')
                 self.send_error_response(400, {'error': 'Missing channel_name parameter'})
                 return
-                
-            token = RtcTokenBuilder.build_token_with_uid(
-                config['app_id'],
-                config['app_certificate'],
-                channel_name,
-                agent_uid,
-                Role_Publisher,
-                24 * 3600,  # token_expire
-                24 * 3600   # privilege_expire
-            )
+
+            if 'app_certificate' in config:
+                token = RtcTokenBuilder.build_token_with_uid(
+                    config['app_id'],
+                    config['app_certificate'],
+                    channel_name,
+                    agent_uid,
+                    Role_Publisher,
+                    24 * 3600,  # token_expire
+                    24 * 3600   # privilege_expire
+                )
+            else:
+                token = ""
             
             payload = {
                 "name": str(uuid.uuid4()),
