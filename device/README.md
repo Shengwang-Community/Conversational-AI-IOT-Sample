@@ -656,7 +656,7 @@
 请在确认你已经从BK官方获得相关工程下载权限后，从`github`获取`bk_aidk`工程，如下所示：
 
 ```bash
-$ git clone --recurse-submodules https://gitlab.bekencorp.com/armino/bk_ai/bk_aidk.git -b ai_release/v2.0.1
+$ git clone --recurse-submodules https://github.com/bekencorp/bk_aidk.git -b ai_release/v2.0.1
 $ git checkout ai_release/v2.0.1.8
 $ git submodule update --recursive
 ```
