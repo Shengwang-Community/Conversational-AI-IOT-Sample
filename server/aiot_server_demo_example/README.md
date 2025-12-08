@@ -1,100 +1,75 @@
 # Warning
-This service project is only for developer quick experience and demonstration purposes. 
+
+This service project is only for developer quick experience and demonstration purposes.
 Do not use in production environment. Production environment services need to be developed by developers.
 
 # IoT Conversational AI Server 🚀
 
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-This server provides APIs for managing IoT devices and conversational AI agents, built with Python and supporting real-time communication via Agora RTC.
+This server provides APIs for managing IoT devices and conversational AI agents through TenAI integration, built with Python HTTP server.
 
 ## Features
-- 🎙️ Real-time voice communication
-- 🤖 Conversational AI integration
-- 🔐 Secure token generation
+
+- 🎙️ TenAI agent integration (start, stop, generate token)
+- 🔐 Secure token generation via TenAI API
+- ⏰ Automatic ping mechanism (every 10 seconds)
 - 📦 Easy deployment options
 - 📊 Comprehensive logging
 
 ## Requirements
 
-- Python 3.7+ 
+- Python 3.7+
 - Required packages:
   ```bash
   requests
-  flask
-  pyjwt
   ```
 
 ## Installation
+
 1. Clone this repository
 2. Install dependencies:
+
 ```bash
-pip install -r requirements.txt
+pip install requests
 ```
 
 ## Configuration
 
-### Configuration File
-Create a `config.json` file with the following structure and explanations:
+### TenAI Configuration File
+
+Create a `tenai_config.json` file with the following structure:
 
 ```json
 {
-  // Agora相关配置
-  "app_id": "YOUR_AGORA_APP_ID",  // Agora应用ID
-  "app_certificate": "YOUR_AGORA_APP_CERTIFICATE",  // Agora应用证书
-  
-  // 客户认证信息
-  "customer_key": "YOUR_CUSTOMER_KEY",  // 客户密钥
-  "customer_secret": "YOUR_CUSTOMER_SECRET",  // 客户密钥
-  
-  // 语音识别(ASR)配置
-  "asr": {
-    "language": "zh-CN"  // 识别语言，默认中文,（支持中英文混合）
-  },
-  
-  // 系统参数配置
-  "parameters": {
-    "output_audio_codec": "PCMA"  // 	rtc发流音频编码格式，支持格式："PCMU" "PCMA" "G722" "OPUS" "OPUSFB"
-    "transcript": {               //  字幕功能参数配置
-      "enable": false             //  禁用字幕功能
-    }
-  },
-  
-  // 语音合成(TTS)配置
-  "tts": {
-    "vendor": "YOUR_TTS_VENDOR",  // TTS服务提供商
-    "params": {
-      
-    }
-  },
-  
-  // 会话超时配置
-  "idle_timeout": 30,  // 会话超时时间（秒）
-  
-  // 大语言模型(LLM)配置
-  "llm": {
-    "url": "YOUR_LLM_API_URL",  // LLM服务地址
-    "params": {
-      "model": "YOUR_LLM_MODEL"  // 使用的模型，
-    },
-    "api_key": "YOUR_LLM_API_KEY",  // LLM服务API密钥
-    "system_messages": [  // 系统预设消息
-      {
-        "role": "system",
-        "content": "You are a helpful chatbot."
-      }
-    ],
-    "max_history": 10,  // 最大历史记录数
-    "greeting_message": "你好，我是小爱，有什么可以帮助你的吗？",  // 欢迎语
-    "failure_message": "抱歉，我暂时无法回答您的问题..."  // 失败提示
-  }
+  "tenai_agent_url": "https://agent.theten.ai",
+  "ai_agent_channel_name": "default_channel",
+  "ai_agent_user_id": 1,
+  "graph_name": "va_openai_azure",
+  "tenai_audio_codec": "{\"che.audio.custom_payload_type\":9}",
+  "greeting": "Hello",
+  "prompt": "You are a helpful assistant.",
+  "language": "en-US",
+  "voice_type": "male"
 }
 ```
-更多详细参数配置见：```https://doc.shengwang.cn/doc/convoai/restful/convoai/operations/start-agent```
+
+**Configuration Parameters:**
+
+- `tenai_agent_url`: TenAI agent service URL
+- `ai_agent_channel_name`: Default channel name (fallback if not provided in request)
+- `ai_agent_user_id`: Default user ID (fallback if not provided in request)
+- `graph_name`: Graph name for agent (default: "va_openai_azure")
+- `tenai_audio_codec`: Audio codec parameters (JSON string)
+- `greeting`: Greeting message
+- `prompt`: System prompt for the agent
+- `language`: Language setting (default: "en-US")
+- `voice_type`: Voice type (default: "male")
 
 ## Running the Server
+
 Start the server with:
+
 ```bash
 python3 main.py
 ```
@@ -104,83 +79,148 @@ The server will run on port 5001 by default.
 ## API Documentation
 
 ### Base URL
-`https://your-domain.com/api/v1`
 
-### Authentication
-All requests require an Authorization header:
-```http
-Authorization: Bearer <access_token>
-```
+`http://localhost:5001`
 
 ### API Endpoints
 
-### POST /device
-Register a new device and generate RTC token
+#### POST /device
 
-Request body:
+Generate RTC token using TenAI agent.
+
+**Request body:**
+
 ```json
 {
-  "channel_name": "DEVICE_ID",
-  "uid": DEVICE_USER_ID
+  "channel_name": "your_channel_name",
+  "uid": 123
 }
 ```
 
-### POST /agent/start 
-Start a conversational AI agent
+**Response:**
 
-Request body:
 ```json
 {
-  "channel_name": "DEVICE_ID",
-  "uid": DEVICE_USER_ID,
-  "agent_uid": AGENT_USER_ID
+  "app_id": "app id",
+  "token": "access token"
 }
 ```
 
-### POST /agent/stop
-Stop a conversational AI agent
+**Example:**
 
-Request body:
+```bash
+curl -X POST http://localhost:5001/device \
+  -H "Content-Type: application/json" \
+  -d '{"channel_name": "test_channel", "uid": 123}'
+```
+
+#### POST /agent/start
+
+Start a TenAI conversational agent. This will automatically start a ping timer that sends ping requests every 10 seconds.
+
+**Request body:**
+
 ```json
 {
-  "agent_id": "AGENT_ID"
+  "channel_name": "convoai-datastream",
+  "uid": "1"
 }
 ```
+
+**Response:**
+Returns the response from TenAI agent start API.
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:5001/agent/start \
+  -H "Content-Type: application/json" \
+  -d '{"channel_name": "convoai-datastream", "uid": "1"}'
+```
+
+**Note:** After a successful start request, the server automatically starts a ping timer that sends ping requests to `https://agent.theten.ai/api/agents/ping` every 10 seconds.
+
+#### POST /agent/stop
+
+Stop a TenAI conversational agent. This will also stop the ping timer.
+
+**Request body:**
+
+```json
+{
+  "channel_name": "convoai-datastream"
+}
+```
+
+**Response:**
+Returns the response from TenAI agent stop API.
+
+**Example:**
+
+```bash
+curl -X POST http://localhost:5001/agent/stop \
+  -H "Content-Type: application/json" \
+  -d '{"channel_name": "convoai-datastream"}'
+```
+
+**Note:** After a successful stop request, the ping timer is automatically stopped.
+
+## Automatic Ping Mechanism
+
+When an agent is started via `/agent/start`, the server automatically starts a background timer that:
+
+- Sends ping requests to `https://agent.theten.ai/api/agents/ping` every 10 seconds
+- Uses the `channel_name` from the start request
+- Generates a new UUID for each ping request
+- Stops automatically when `/agent/stop` is called
 
 ## Logging
 
 Logs are written to stdout with the following format:
+
 ```
 [timestamp] [level] - [message]
 ```
 
 Log levels:
-- DEBUG: Detailed debug information
+
 - INFO: General operational messages
 - WARNING: Indicates potential issues
 - ERROR: Errors that need attention
-- CRITICAL: Critical system failures
+
+## Error Handling
+
+All endpoints return appropriate HTTP status codes:
+
+- `200`: Success
+- `400`: Bad Request (missing or invalid parameters)
+- `404`: Not Found (invalid endpoint)
+- `500`: Internal Server Error
+
+Error responses follow this format:
+
+```json
+{
+  "error": "Error message description"
+}
+```
 
 ## Security Considerations
 
-- Always keep your Agora credentials secure
+- Always keep your TenAI agent URL and configuration secure
 - Use HTTPS in production environments
-- Regularly rotate your access tokens
+- Validate all input parameters
 - Implement rate limiting for API endpoints
+
+## Code Structure
+
+The server is built using Python's `http.server` module with the following main components:
+
+- **RequestHandler**: Handles HTTP requests and routes them to appropriate handlers
+- **TenAI Integration**: Functions for communicating with TenAI agent API
+- **Ping Timer**: Background thread for automatic ping requests
+- **Configuration Management**: Loads settings from `tenai_config.json`
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Example Usage
-
-```python
-import requests
-
-# Generate RTC token
-response = requests.post(
-    "https://your-domain.com/device",
-    json={"channel_name": "12345", "uid": 1}
-)
-print(response.json())
-```
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
