@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Server specific
+aiot_server_demo_example/__pycache__/
+aiot_server_demo_example/*.pyc
+aiot_server_demo_example/*.pyo
+
+
