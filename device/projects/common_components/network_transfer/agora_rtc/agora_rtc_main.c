@@ -693,7 +693,7 @@ void agora_convoai_engine_start()
         LOGE("convoai start failed.\n");
         return;
     }
-    LOGI("convoai start succcess. conversation_id=%s\n", convoai_start_resp->conversation_id);
+    LOGI("convoai start succcess. channel_name=%s\n", convoai_start_resp->channel_name);
 
     /* 拉取定时器 */
     __convoai_timer_start_or_relaunch();
@@ -712,7 +712,7 @@ void agora_convoai_engine_stop()
 
     /* 退出convoai服务端 */
     agora_convoai_stop_param_t convoai_stop_param;
-    os_memcpy(convoai_stop_param.conversation_id, convoai_start_resp->conversation_id, sizeof(convoai_stop_param.conversation_id));
+    os_memcpy(convoai_stop_param.channel_name, convoai_start_resp->channel_name, sizeof(convoai_stop_param.channel_name));
     agora_convoai_stop(&convoai_stop_param);
     psram_free(convoai_start_resp);
     convoai_start_resp = NULL;
