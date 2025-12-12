@@ -21,6 +21,7 @@ extern "C" {
 typedef struct {
   char channel_name[AGORA_CONVOAI_DEVICE_ID_SIZE];
   int local_uid;
+  int agent_uid;
 } agora_convoai_configs_param_t;
 
 typedef struct {
@@ -33,15 +34,14 @@ typedef struct {
 typedef struct {
   char channel_name[AGORA_CONVOAI_DEVICE_ID_SIZE];
   int local_uid;
-  int agent_uid;
 } agora_convoai_start_param_t;
 
 typedef struct {
-  char conversation_id[AGORA_CONVOAI_CONVERSATION_ID_SIZE];
+  char channel_name[AGORA_CONVOAI_DEVICE_ID_SIZE];
 } agora_convoai_start_resp_t;
 
 typedef struct {
-  char conversation_id[AGORA_CONVOAI_CONVERSATION_ID_SIZE];
+  char channel_name[AGORA_CONVOAI_DEVICE_ID_SIZE];
 } agora_convoai_stop_param_t;
 
 typedef struct {

@@ -202,9 +202,14 @@ agora_convoai_configs_resp_t* agora_convoai_configs_get(agora_convoai_configs_pa
   }
 
   __get_convoai_config_url(request_url);
-  len = os_snprintf(request_body, HTTP_REQ_BODY_SIZE, "{\"channel_name\": \"%s\", \"uid\": %d}",
+  len = os_snprintf(request_body,
+                    HTTP_REQ_BODY_SIZE, "{\"channel_name\": \"%s\","
+                                        "\"uid\": %d, "          
+                                        "\"agent_uid\": %d"
+                                        "}",
                     config_param->channel_name,
-                    config_param->local_uid);
+                    config_param->local_uid,
+                    config_param->agent_uid);
 
   while (--try_cnt >= 0) {
     err = __https_post_request(request_url, request_body, len, resp_body, HTTP_RSP_BODY_SIZE);
@@ -282,7 +287,7 @@ agora_convoai_start_resp_t* agora_convoai_start(agora_convoai_start_param_t *sta
   char *request_body = NULL;
   char *resp_body = NULL;
   char *request_url = NULL;
-  cJSON *root = NULL, *conversation_id = NULL;
+  cJSON *root = NULL, *message = NULL;
   agora_convoai_start_resp_t *start_rsp = NULL;
   int try_cnt = 2;
 
@@ -304,11 +309,9 @@ agora_convoai_start_resp_t* agora_convoai_start(agora_convoai_start_param_t *sta
   __get_convoai_start_url(request_url);
   len = os_snprintf(request_body,
                     HTTP_REQ_BODY_SIZE, "{\"channel_name\": \"%s\", "
-                                         "\"agent_uid\": %d, "
-                                         "\"uid\": %d "
+                                        "\"uid\": %d "
                                         "}",
                     start_param->channel_name,
-                    start_param->agent_uid,
                     start_param->local_uid);
 
   while (--try_cnt >= 0) {
@@ -329,13 +332,18 @@ agora_convoai_start_resp_t* agora_convoai_start(agora_convoai_start_param_t *sta
     goto L_EXIT;
   }
 
-  if (NULL == (conversation_id = cJSON_GetObjectItem(root, "agent_id"))) {
-    LOGE("convoai start resp format invalid. agent_id not found");
+  if (NULL == (message = cJSON_GetObjectItem(root, "msg"))) {
+    LOGE("convoai start resp format invalid. msg not found");
     goto L_EXIT;
   }
 
-  if ((conversation_id->type & 0xFF) != cJSON_String) {
-    LOGE("convoai start resp format invalid. conversation_id not string");
+  if ((message->type & 0xFF) != cJSON_String) {
+    LOGE("convoai start resp format invalid. message not string");
+    goto L_EXIT;
+  }
+
+  if (strcmp(message->valuestring, "success")) {
+    LOGE("convoai start resp invalid. result not success");
     goto L_EXIT;
   }
 
@@ -344,11 +352,11 @@ agora_convoai_start_resp_t* agora_convoai_start(agora_convoai_start_param_t *sta
     goto L_EXIT;
   }
 
-  os_snprintf(start_rsp->conversation_id, sizeof(start_rsp->conversation_id), conversation_id->valuestring);
+  os_snprintf(start_rsp->channel_name, sizeof(start_rsp->channel_name), start_param->channel_name);
   err = 0;
 
-  LOGI("convoai start success. conversation_id=%s, channel_name=%s, local_uid=%u, agent_uid=%u", start_rsp->conversation_id,
-       start_param->channel_name, start_param->local_uid, start_param->agent_uid);
+  LOGI("convoai start success. channel_name=%s, local_uid=%u",
+       start_param->channel_name, start_param->local_uid);
 
 L_EXIT:
   if (request_body) {
@@ -398,7 +406,7 @@ int agora_convoai_stop(agora_convoai_stop_param_t *stop_param)
   }
 
   __get_convoai_stop_url(request_url);
-  len = os_snprintf(request_body, HTTP_REQ_BODY_SIZE, "{\"agent_id\": \"%s\"}", stop_param->conversation_id);
+  len = os_snprintf(request_body, HTTP_REQ_BODY_SIZE, "{\"channel_name\": \"%s\"}", stop_param->channel_name);
 
   while (--try_cnt >= 0) {
     err = __https_post_request(request_url, request_body, len, resp_body, HTTP_RSP_BODY_SIZE);
@@ -410,7 +418,7 @@ int agora_convoai_stop(agora_convoai_stop_param_t *stop_param)
     goto L_EXIT;
   }
 
-  LOGI("convoai stop success. conversation_id=%s", stop_param->conversation_id);
+  LOGI("convoai stop success. channel_name=%s", stop_param->channel_name);
 
   err = 0;
 L_EXIT:

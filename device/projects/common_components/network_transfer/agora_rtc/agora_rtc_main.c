@@ -635,6 +635,7 @@ int agora_convoai_engine_load_config()
     agora_convoai_configs_param_t convoai_config_param;
     snprintf(convoai_config_param.channel_name, sizeof(convoai_config_param.channel_name), "%s", "*");
     convoai_config_param.local_uid = AGORA_CONVOAI_LOCAL_UID;
+    convoai_config_param.agent_uid = AGORA_CONVOAI_AGENT_UID;
     LOGI("channel_name=%s, uid=%d\n", convoai_config_param.channel_name, convoai_config_param.local_uid);
     if (NULL == (convoai_configs = agora_convoai_configs_get(&convoai_config_param))) {
         LOGE("convoai get configs failed.\n");
@@ -688,7 +689,6 @@ void agora_convoai_engine_start()
     agora_convoai_start_param_t convoai_start_param;
     os_memcpy(convoai_start_param.channel_name, agora_channel_name, sizeof(convoai_start_param.channel_name));
     convoai_start_param.local_uid = AGORA_CONVOAI_LOCAL_UID;
-    convoai_start_param.agent_uid = AGORA_CONVOAI_AGENT_UID;
     if (NULL == (convoai_start_resp = agora_convoai_start(&convoai_start_param))) {
         LOGE("convoai start failed.\n");
         return;
