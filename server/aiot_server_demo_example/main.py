@@ -65,13 +65,13 @@ def _build_channel_request_payload(channel_name):
 
 def send_ping_request(channel_name):
     """Send ping request to TenAI agent"""
-    ping_url = _build_tenai_url("api/agents/ping")
+    ping_url = _build_tenai_url("/ping")
     payload = _build_channel_request_payload(channel_name)
     _send_tenai_request(ping_url, payload, "ping request")
 
 def send_stop_request(channel_name):
     """Send stop request to TenAI agent"""
-    stop_url = _build_tenai_url("api/agents/stop")
+    stop_url = _build_tenai_url("/stop")
     payload = _build_channel_request_payload(channel_name)
     return _send_tenai_request(stop_url, payload, "stop request")
 
@@ -243,7 +243,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
             
             # Build URL and request body
-            start_url = _build_tenai_url("api/agents/start")
+            start_url = _build_tenai_url("/start")
             request = self._build_start_json(channel_name=channel_name, user_uid=user_uid)
             
             # Print request (equivalent to printf in C code)
@@ -312,11 +312,11 @@ class RequestHandler(BaseHTTPRequestHandler):
     def handle_ten_agent_generate_request(self, uid=None, channel_name=None):
         """Generate AI agent information - Client function (equivalent to ai_agent_generate() in C code)"""
         # Build URL and request body
-        generate_url = _build_tenai_url("api/token/generate")
+        generate_url = _build_tenai_url("token/generate")
         request = self._build_generate_json(uid, channel_name)
         
         # Print request (equivalent to printf in C code)
-        print(f"http_with_url request ={request}")
+        print(f"http_with_url={generate_url} request ={request}")
         
         try:
             # Send HTTP POST request

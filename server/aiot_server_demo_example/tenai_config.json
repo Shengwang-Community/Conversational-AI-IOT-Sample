@@ -1,5 +1,5 @@
 {
-    "tenai_agent_url": "https://agent.theten.ai",
+    "tenai_agent_url": "http://23.251.122.104:8888",
     "ai_agent_channel_name": "default_channel",
     "ai_agent_user_id": 1,
     "graph_name": "va_openai_azure",
